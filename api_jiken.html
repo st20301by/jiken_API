@@ -155,9 +155,6 @@
     };
 
     gl.onupdate = function(s){
-      if(mvZ == MAX){
-        
-      }
       if (controller0 != null) {
         if (navigator.getGamepads()[0] != controller0) {
           controller0 = navigator.getGamepads()[0];
@@ -182,10 +179,10 @@
         if(controller0.buttons[6].value == 1) transZ += s*30     // L2
         if(controller0.buttons[7].value == 1) transZ -= s*30     // R2
         
-        if(controller0.buttons[0].value == 1){ relo += 1; if(relo > 4){moveY -= (moveY>0)?2:0; relo=0;}}        // A
+        if(controller0.buttons[0].value == 1){ relo += 1; if(relo > 4){moveY -= (moveY>0)?2:0; relo=0;}}                                  // A
         if(controller0.buttons[1].value == 1){ relo += 1; if(relo > 4){newPum = rmPum(newPum, [moveX/2,moveY/2,moveZ/2]);relo=0;}}        // B
-        if(controller0.buttons[2].value == 1){ relo += 1; if(relo > 4){newPum.push([moveX/2,moveY/2,moveZ/2]);relo=0;}}        // X
-        if(controller0.buttons[3].value == 1){ relo += 1; if(relo > 4){moveY += (moveY<20)?2:0; relo=0;}}        // Y
+        if(controller0.buttons[2].value == 1){ relo += 1; if(relo > 4){newPum.push([moveX/2,moveY/2,moveZ/2]);relo=0;}}                   // X
+        if(controller0.buttons[3].value == 1){ relo += 1; if(relo > 4){moveY += (moveY<20)?2:0; relo=0;}}                                 // Y
 
         if(controller0.buttons[9].value == 1){ relo += 1; if(relo > 6){location.reload();relo=0} }
 
