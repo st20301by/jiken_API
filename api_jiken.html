@@ -184,7 +184,7 @@
         if(controller0.buttons[2].value == 1){ relo += 1; if(relo > 4){newPum.push([moveX/2,moveY/2,moveZ/2]);relo=0;}}                   // X
         if(controller0.buttons[3].value == 1){ relo += 1; if(relo > 4){moveY += (moveY<20)?2:0; relo=0;}}                                 // Y
 
-        if(controller0.buttons[9].value == 1){ relo += 1; if(relo > 6){location.reload();relo=0} }
+        if(controller0.buttons[9].value == 1){ relo += 1; if(relo > 6){relo=0;location.reload();} }
 
         // moveX -= controller0.axes[1] * 0.1;
         // moveZ += controller0.axes[0] * 0.1;
