@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <script src="lightgl.js"></script>
+
+  <script id="vertexShader" type="x-shader/x-vertex">
+    varying vec2 coord; 
+    void main() {
+      coord = gl_TexCoord.xy; 
+      gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+    varying vec2 coord;
+    void main() {
+      gl_FragColor = texture2D(texture, coord); 
+    }
+  </script>
+
+  <script>
+    let angleX = 20, angleY= 0, transZ = 0; jol = 0, sp_keydown=0, w_keydown = 0, s_keydown = 0, a_keydown = 0, d_keydown = 0;
+    let MAX = 100, N = 20, num = 2, moveX = 0, moveZ = 0, moveY = 0, mvX = 0, mvZ = 0, relo = 0, newPum = [];
+    let rNum =  Math.floor(Math.random() * 10)+2;
+    const mX = [], mY = [];
+    let controller0;
+    window.addEventListener("gamepadconnected", function(e) {
+      controller0 = e.gamepad;
+    });
+    window.addEventListener("gamepaddisconnected", function(e) {
+      delete e.gamepad;
+    });
+
+    for(let i = 0 ; i < 2*rNum ; i++){ mX.push( Math.floor(Math.random() * 2 * N) - N); mY.push(Math.floor(Math.random() * 2 * N) - N)};
+    for(let i=0 ; i <= rNum ; i++){
+      newPum.push([mX[i], 0, mY[i]]);
+    }
+    let gl = GL.create();
+
+    const cube = [
+      GL.Mesh.plane({ coords: true }),
+      GL.Mesh.cube({ coords: true }),
+    ];
+
+    // 6つのテクスチャをロード
+    const textures = [
+      GL.Texture.fromURL('./texture/grass_block_top.png'),
+      GL.Texture.fromURL('./texture/grass_block_side.png'),
+      GL.Texture.fromURL('./texture/grass_block_bottom.png'),
+
+      GL.Texture.fromURL('./texture/oak_log_tb.png'),
+      GL.Texture.fromURL('./texture/oak_log_side.png'),
+
+      GL.Texture.fromURL('./texture/pumpkin_tb.png'),
+      GL.Texture.fromURL('./texture/pumpkin_side.png'),
+      GL.Texture.fromURL('./texture/pumpkin_craved.png'),
+      GL.Texture.fromURL('./texture/jackolantern.png'),
+
+      GL.Texture.fromURL('./texture/oak_leaves.png'),
+
+      GL.Texture.fromURL(''),
+    ];
+
+    const shader = new GL.Shader('vertexShader', 'fragmentShader');
+
+    function pumpkin(mx, my, mz, k){
+      for (let i = 0; i < 6; i++) {
+        gl.pushMatrix();
+        gl.translate(mx*2, my*2, 2*mz);
+        switch (i) {
+          case 0: gl.translate(0, 0, 1); break; // 前面
+          case 1: gl.translate(-1, 0, 0); gl.rotate(-90, 0, 1, 0); break; // 左側面
+          case 2: gl.translate(0, 1, 0); gl.rotate(-90, 1, 0, 0); break; // 上面
+          case 3: gl.translate(0, -1, 0); gl.rotate(90, 1, 0, 0); break; // 底面
+          case 4: gl.translate(1, 0, 0); gl.rotate(90, 0, 1, 0); break; // 右側面
+          case 5: gl.translate(0, 0, -1); gl.rotate(180, 0, 1, 0); break; // 背面
+        }
+        switch(i){
+          case 2: ;
+          case 3: textures[5].bind(0);  break;
+          case 0: jol ? textures[8].bind(0) : textures[7].bind(0);  break;
+          default: textures[6].bind(0);
+        }
+        if(i==0 && k==0) textures[6].bind(0);
+        shader.uniforms({texture: 0}).draw(cube[0]);
+        gl.popMatrix(); 
+      }
+    }
+    function rmPum(list, cord) {
+      for(let i=0 ; i<list.length ; i++){
+        let bbol = 1;
+        for(let j=0 ; j<3; j++){
+          if(list[i][j] != cord[j]) bbol=0;
+        }
+        if(bbol) list.splice(i, 1);
+      }
+      return list;
+    }
+
+    function tree(mx, mz){
+      for (let i = 0; i < 6; i++) {
+        gl.pushMatrix();
+        gl.translate(mx*2, i*2, 2*mz);
+        for(let j=0 ; j<4 ; j++){
+        gl.pushMatrix();
+          switch (j) {
+            case 0: gl.translate(0, 0, 1); break; // 前面
+            case 1: gl.translate(-1, 0, 0); gl.rotate(-90, 0, 1, 0); break; // 左側面
+            case 2: gl.translate(1, 0, 0); gl.rotate(90, 0, 1, 0); break; // 右側面
+            case 3: gl.translate(0, 0, -1); gl.rotate(180, 0, 1, 0); break; // 背面
+          } 
+          textures[4].bind(0);
+          shader.uniforms({texture: 0}).draw(cube[0]);
+        gl.popMatrix();
+        }
+        gl.popMatrix(); 
+      }
+      gl.pushMatrix();
+        gl.translate(mx*2, 11, mz*2); gl.rotate(-90, 1, 0, 0);
+        textures[3].bind(0);
+        shader.uniforms({texture:0}).draw(cube[0]);
+      gl.popMatrix();
+
+      for(let k=0 ; k<2 ; k++){
+        for(let i=-2 ; i<3 ; i++){
+          for(let j=-2 ; j<3 ; j++){
+            gl.pushMatrix();
+            gl.translate(2*(mx+i), 6+k*2, 2*(mz+j));
+            textures[9].bind(0);
+            shader.uniforms({texture:0}).draw(cube[1]);
+            gl.popMatrix();
+          }
+        }
+      }
+      for(let k=0 ; k<2 ; k++){
+        for(let i=-1 ; i<2 ; i++){
+          for(let j=-1 ; j<2 ; j++){
+            if(k>0 && Math.abs(i)>0 && Math.abs(i)==Math.abs(j)) continue;
+            gl.pushMatrix();
+            gl.translate(2*(mx+i), 10+k*2, 2*(mz+j));
+            textures[9].bind(0);
+            shader.uniforms({texture:0}).draw(cube[1]);
+            gl.popMatrix();
+          }
+        }
+      }
+    }
+
+    gl.onmousemove = function(e) {
+        if (e.dragging) {
+            angleY += e.deltaX/5;
+            angleX += e.deltaY/5;
+        }
+    };
+
+    gl.onupdate = function(s){
+      if(mvZ == MAX){
+        
+      }
+      if (controller0 != null) {
+        if (navigator.getGamepads()[0] != controller0) {
+          controller0 = navigator.getGamepads()[0];
+        }
+        angleX += (Math.abs(controller0.axes[3]) > 0.1) ? controller0.axes[3]*2 : 0.0;
+        angleY += (Math.abs(controller0.axes[2]) > 0.1) ? controller0.axes[2]*2 : 0.0;
+        mvZ -= (Math.abs(controller0.axes[1]) > 0.5) ? Math.sign(controller0.axes[1]) : 0.0;
+        mvX -= (Math.abs(controller0.axes[0]) > 0.5) ? Math.sign(controller0.axes[0]) : 0.0;
+
+        if(controller0.buttons[15].value == 1){ relo += 1; if(relo > 2){moveX += (moveX<2*N)?2:0; relo=0;}}        // right
+        if(controller0.buttons[14].value == 1){ relo += 1; if(relo > 2){moveX -= (moveX>-2*N)?2:0; relo=0;}}        // left
+        if(controller0.buttons[13].value == 1){ relo += 1; if(relo > 2){moveZ += (moveZ<2*N)?2:0; relo=0;}}        // down
+        if(controller0.buttons[12].value == 1){ relo += 1; if(relo > 2){moveZ -= (moveZ>-2*N)?2:0; relo=0;}}        // up
+        
+        if(controller0.buttons[10].value == 1) jol = 1           // left joystick click
+        if(controller0.buttons[11].value == 1) jol = 0           // right joystick click
+        
+
+        if(controller0.buttons[4].value == 1) transZ += s*10     // L1
+        if(controller0.buttons[5].value == 1) transZ -= s*10     // R1
+        
+        if(controller0.buttons[6].value == 1) transZ += s*30     // L2
+        if(controller0.buttons[7].value == 1) transZ -= s*30     // R2
+        
+        if(controller0.buttons[0].value == 1){ relo += 1; if(relo > 4){moveY -= (moveY>0)?2:0; relo=0;}}        // A
+        if(controller0.buttons[1].value == 1){ relo += 1; if(relo > 4){newPum = rmPum(newPum, [moveX/2,moveY/2,moveZ/2]);relo=0;}}        // B
+        if(controller0.buttons[2].value == 1){ relo += 1; if(relo > 4){newPum.push([moveX/2,moveY/2,moveZ/2]);relo=0;}}        // X
+        if(controller0.buttons[3].value == 1){ relo += 1; if(relo > 4){moveY += (moveY<20)?2:0; relo=0;}}        // Y
+
+        if(controller0.buttons[9].value == 1){ relo += 1; if(relo > 6){location.reload();relo=0} }
+
+        // moveX -= controller0.axes[1] * 0.1;
+        // moveZ += controller0.axes[0] * 0.1;
+      }
+
+      if(GL.keys.SPACE){
+        if(!jol && !sp_keydown){ jol = 1; sp_keydown = 1;}
+        if(jol && !sp_keydown) { jol = 0; sp_keydown = 1;}
+      }
+      if(!GL.keys.SPACE) sp_keydown = 0;
+      
+      if(GL.keys.W){
+        if(!w_keydown){ w_keydown = 1; moveZ+=2;}
+      }
+      if(!GL.keys.W) w_keydown = 0;
+      
+      if(GL.keys.S){
+        if(!s_keydown){ s_keydown = 1; moveZ-=2;}
+      }
+      if(!GL.keys.S) s_keydown = 0;
+      
+      if(GL.keys.A){
+        if(!a_keydown){ a_keydown = 1; moveX+=2;}
+      }
+      if(!GL.keys.A) a_keydown = 0;
+      
+      if(GL.keys.D){
+        if(!d_keydown){ d_keydown = 1; moveX-=2;}
+      }
+      if(!GL.keys.D) d_keydown = 0;
+      
+      if(GL.keys.LEFT){ mvX += s*10*Math.cos((angleY)/180*Math.PI); mvZ += s*10*Math.sin((angleY)/180*Math.PI);}
+      if(GL.keys.RIGHT){ mvX -= s*10*Math.cos((angleY)/180*Math.PI); mvZ -= s*10*Math.sin((angleY)/180*Math.PI);}
+      if(GL.keys.UP){ mvZ += s*10*Math.cos((angleY)/180*Math.PI); mvX -= s*10*Math.sin((angleY)/180*Math.PI);}
+      if(GL.keys.DOWN){ mvZ -= s*10*Math.cos((angleY)/180*Math.PI); mvX += s*10*Math.sin((angleY)/180*Math.PI);}
+      //zoom
+      if(GL.keys.Z) transZ -= s*10;
+      if(GL.keys.X) transZ += s*10;
+    }
+
+    gl.ondraw = function() {
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+      gl.loadIdentity(); 
+      gl.translate(0, 0, -50+transZ); 
+      gl.rotate(angleX, 1, 0, 0);
+      gl.rotate(angleY, 0, 1, 0);
+      gl.translate(mvX, 0,  0);
+      gl.translate(0, 0,  mvZ);
+
+      // 各面を描画
+      gl.pushMatrix();
+      gl.translate(moveX, moveY, moveZ);
+      pumpkin(0,0,0,1);
+      gl.popMatrix();
+      
+
+      for(let i=0 ; i<num ; i++)
+      tree(mX[rNum+i], mY[rNum+i]);
+      
+      for(let i=0 ; i<newPum.length ; i++){
+        pumpkin(newPum[i][0], newPum[i][1], newPum[i][2], 0);
+      }
+
+      for (let i = -N; i < N+1; i++) {
+        for (let j = -N; j < N+1; j++){
+          gl.pushMatrix();
+            gl.translate(i*2, -1.0001, j*2);
+            gl.rotate(-90, 1, 0, 0);
+            textures[0].bind(0);
+            shader.uniforms({
+              texture: 0
+            }).draw(cube[0]);
+          gl.popMatrix();
+        }
+      }
+    };
+
+    gl.fullscreen();
+    gl.animate();
+    gl.enable(gl.DEPTH_TEST);
+    
+  </script>
+</body>
+</html>
